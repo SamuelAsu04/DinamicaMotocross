@@ -75,7 +75,7 @@ def main():
 
         screen.fill((180, 210, 240))
         terrain.draw(screen, camera_x, camera_y)
-        draw_bike(screen, moto_objeto,lean_state, camera_x)
+        draw_bike(screen, moto_objeto, lean_state, camera_x, camera_y)  # FIX: añadido camera_y
 
         hud = [
             f"v: {moto.velocity.length:6.1f} px/s   ángulo: {math.degrees(moto.angle):5.1f}°   distancia: {int(moto_x)} px",

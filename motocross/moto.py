@@ -54,7 +54,7 @@ def load_assets():
 
 
 # -----------------------------------------------------------------------------
-# Coordenadas  (acepta camera_x para el scroll)
+# Coordenadas  (acepta camera_x y camera_y para el scroll)
 # -----------------------------------------------------------------------------
 def to_pygame(p, camera_x=0, camera_y=0):
     return int(p[0] - camera_x), int(HEIGHT - p[1] + camera_y)
@@ -113,15 +113,16 @@ def reset_bike(bike):
         w['body'].velocity = (0, 0)
         w['body'].angle = 0
         w['body'].angular_velocity = 0
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 # Dibujar
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 def blit_rotated(screen, image, center_pygame, angle_radians):
     rotated = pygame.transform.rotate(image, math.degrees(angle_radians))
     rect = rotated.get_rect(center=center_pygame)
     screen.blit(rotated, rect)
 
-def draw_moto_placeholder(screen, moto, camera_x):
+def draw_moto_placeholder(screen, moto, camera_x, camera_y=0):  
     cw, ch = moto_SIZE
     cos_a, sin_a = math.cos(moto.angle), math.sin(moto.angle)
     cx, cy = moto.position
@@ -129,35 +130,35 @@ def draw_moto_placeholder(screen, moto, camera_x):
     for x, y in [(-cw/2, -ch/2), (cw/2, -ch/2), (cw/2, ch/2), (-cw/2, ch/2)]:
         wx = cx + x*cos_a - y*sin_a
         wy = cy + x*sin_a + y*cos_a
-        corners.append(to_pygame((wx, wy), camera_x))
+        corners.append(to_pygame((wx, wy), camera_x, camera_y))
     pygame.draw.polygon(screen, (200, 40, 40), corners)
     pygame.draw.polygon(screen, (30, 0, 0), corners, 2)
 
-def draw_rueda_placeholder(screen, body, camera_x):
-    center = to_pygame(body.position, camera_x)
+def draw_rueda_placeholder(screen, body, camera_x, camera_y=0): 
+    center = to_pygame(body.position, camera_x, camera_y)  
     pygame.draw.circle(screen, (35, 35, 35), center, rueda_RADIUS)
     pygame.draw.circle(screen, (160, 160, 160), center, rueda_RADIUS, 2)
     ex = center[0] + int(rueda_RADIUS * math.cos(body.angle))
     ey = center[1] - int(rueda_RADIUS * math.sin(body.angle))
     pygame.draw.line(screen, (255, 230, 60), center, (ex, ey), 2)
 
-def draw_bike(screen, bike, lean_state, camera_x=0):
+def draw_bike(screen, bike, lean_state, camera_x=0, camera_y=0):  
     assets = load_assets()
     rueda_img = assets.get('rueda')
     for w in bike['ruedas']:
         body = w['body']
-        center = to_pygame(body.position, camera_x)
+        center = to_pygame(body.position, camera_x, camera_y)  
         if rueda_img is not None:
             blit_rotated(screen, rueda_img, center, body.angle)
         else:
-            draw_rueda_placeholder(screen, body, camera_x)
+            draw_rueda_placeholder(screen, body, camera_x, camera_y)
 
     moto = bike['moto']
     bike_key = {'back': 'bike_lean_back', 'fwd': 'bike_lean_fwd',
                 'neutral': 'bike_neutral'}[lean_state]
     moto_img = assets.get(bike_key)
-    center = to_pygame(moto.position, camera_x)
+    center = to_pygame(moto.position, camera_x, camera_y)
     if moto_img is not None:
         blit_rotated(screen, moto_img, center, moto.angle)
     else:
-        draw_moto_placeholder(screen, moto, camera_x)
+        draw_moto_placeholder(screen, moto, camera_x, camera_y) 
