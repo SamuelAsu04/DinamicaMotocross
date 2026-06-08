@@ -1,1 +1,1 @@
-camera_y
+moto_y

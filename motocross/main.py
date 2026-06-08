@@ -2,15 +2,20 @@ import math
 import sys
 import pygame
 import pymunk
+import propiedades_moto as pm
 
-from moto import load_assets, crear_moto, reset_bike, draw_bike, WIDTH, HEIGHT, FPS
-from terreno import Terrain, SUELO_y
+from camara import Camera
+from moto import crear_moto, reset_bike, draw_bike, momento_angular_chasis
+from terreno import propiedades_segmentos, Terrain, SUELO_y
+from colisiones_handler import registrar_handlers, estado_juego
 
-GRAVEDAD         = (0, -900)
+
+WIDTH, HEIGHT = 1200, 600
+FPS = 60
+
+GRAVEDAD        = (0, -900)
 MOTOR_MAX_FORCE = 80_000
 LEAN_TORQUE     = 80_000
-CAMERA_OFFSET_X = WIDTH // 3
-CAMERA_OFFSET_Y = HEIGHT // 3
 
 def main():
     pygame.init()
@@ -18,15 +23,19 @@ def main():
     pygame.display.set_caption("Motocross 2D")
     clock = pygame.time.Clock()
     font  = pygame.font.SysFont(None, 22)
-
+    
     space = pymunk.Space()
     space.gravity = GRAVEDAD
 
-    terrain  = Terrain(space)
-    moto_objeto = crear_moto(space, position=(200, SUELO_y + 120))
-    camera_x = 0.0
-    camera_y = 0.0
-    
+    registrar_handlers(
+        space,
+        ruedas_ct   = pm.ruedas_propiedades,
+        terrenos_ct = propiedades_segmentos
+    )
+
+    terrain     = Terrain(space)
+    moto_objeto = crear_moto(space, position=(200, SUELO_y + 200))
+    camara = Camera()
     running = True
     while running:
         dt = 1.0 / FPS
@@ -54,32 +63,52 @@ def main():
             motor.rate = 0
             motor.max_force = 0
 
-        lean_back = keys[pygame.K_UP]
-        lean_fwd  = keys[pygame.K_DOWN]
+        lean_back  = keys[pygame.K_UP]
+        lean_fwd   = keys[pygame.K_DOWN]
         lean_state = 'back' if lean_back else 'fwd' if lean_fwd else 'neutral'
 
+        aire = (estado_juego['contactos_activos'] == 0)
+        
         sub_dt = dt / 4
         for _ in range(4):
-            if lean_back:
-                moto.torque = LEAN_TORQUE
-            elif lean_fwd:
-                moto.torque = -LEAN_TORQUE
+            if aire: 
+                motor.max_force = 0 
+                if lean_back:
+                    moto.torque = pm.TORQUE_AIRE
+                elif lean_fwd:
+                    moto.torque = -pm.TORQUE_AIRE
+                else:
+                    # estabilización suave hacia horizontal
+                    moto.torque = -pm.ESTABILIZACION * moto.angular_velocity
+
+                 # limitar omega máxima
+                moto.angular_velocity = max(-pm.OMEGA_MAX_AIRE, min(pm.OMEGA_MAX_AIRE, moto.angular_velocity))
+            else:
+                if lean_back:
+                    moto.torque = LEAN_TORQUE
+                elif lean_fwd:
+                    moto.torque = -LEAN_TORQUE
             space.step(sub_dt)
 
-        moto_x    = moto.position.x
-        moto_y    = moto.position.y
-        camera_x += (moto_x - CAMERA_OFFSET_X - camera_x) * 0.12
-        camera_y += (moto_y - CAMERA_OFFSET_Y - camera_y) * 0.12
-
+        
+    
+        moto_x,  moto_y = moto.position
+        
+        camara.actu_camara(moto_x, moto_y)
         terrain.update(moto_x)
 
         screen.fill((180, 210, 240))
-        terrain.draw(screen, camera_x, camera_y)
-        draw_bike(screen, moto_objeto, lean_state, camera_x, camera_y)  # FIX: añadido camera_y
+        terrain.draw(screen, camara.x, camara.y)
+        draw_bike(screen, moto_objeto, lean_state, camara.x, camara.y)
 
+        L = momento_angular_chasis(moto)
+        
         hud = [
-            f"v: {moto.velocity.length:6.1f} px/s   ángulo: {math.degrees(moto.angle):5.1f}°   distancia: {int(moto_x)} px",
-            "← acelerar   → frenar   ↑ inclinarse atrás   ↓ inclinarse adelante   R reiniciar",
+            f"Velocidad: {moto.velocity.length:6.1f} px/s   "
+            f"Angulo: {math.degrees(moto.angle):5.1f}°   "
+            f"Distancia: {int(moto_x)} px",
+            f"Impulso aterrizaje: {estado_juego['ultimo_impulso']:.0f}   "
+            f"L = {L:.1f} kg·px²/s   ω = {moto.angular_velocity:.2f} rad/s   {'EN AIRE' if aire else 'en suelo'}",
         ]
         for i, line in enumerate(hud):
             screen.blit(font.render(line, True, (20, 20, 20)), (10, 10 + i * 22))

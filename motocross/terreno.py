@@ -10,19 +10,25 @@ SUELO_y       = 100
 TERRAIN_AMP    = 85
 TERRAIN_MIN_Y  = SUELO_y - 10
 
-
+#  ( friccion, elesticidad, tipo de colision)
+propiedades_segmentos = [ (0.9, 0.15,10),(0.7,0.05,11),(1.2, 0.05,12) ]
 class Terrain:
     def __init__(self, space):
         self.space = space
         self.segmentos = []
         self.frontier_x = -1000
         self.last_y = SUELO_y
+
+        self.estado          = 0
+        self.segs_en_estado  = 0       
+        self.segs_para_rampa = random.randint(5, 9)  
         self.generate_up_to(MARGEN_TERRENO)
 
-    def crear_segmento(self, x0, y0, x1, y1):
+
+
+    def crear_segmento(self, x0, y0, x1, y1, tipo=0):
         shape = pymunk.Segment(self.space.static_body, (x0, y0), (x1, y1), 5)
-        shape.friction = 1.0
-        shape.elasticity = 0.2
+        shape.friction, shape.elasticity, shape.collision_type = propiedades_segmentos[tipo]
         self.space.add(shape)
         self.segmentos.append({'shape': shape, 'x0': x0, 'y0': y0, 'x1': x1, 'y1': y1})
 
@@ -30,9 +36,19 @@ class Terrain:
         x, y = self.frontier_x, self.last_y
         while x < target_x:
             next_x = x + SEG_WIDTH
-            next_y = max(TERRAIN_MIN_Y, y + random.uniform(-TERRAIN_AMP, TERRAIN_AMP))
-            self.crear_segmento(x, y, next_x, next_y)
+
+            if self.estado == 0:
+                next_y = max(TERRAIN_MIN_Y, y + random.uniform(-TERRAIN_AMP, TERRAIN_AMP))
+            elif self.estado == 1:
+                next_y = max(TERRAIN_MIN_Y, y + random.uniform(60, 100))  # sube fuerte
+
+            elif self.estado == 2:
+                next_y = y + random.uniform(-40, -10)  # baja suave
+
+            self.crear_segmento(x, y, next_x, next_y, self.estado)
+            self.siguiente_estado()
             x, y = next_x, next_y
+
         self.frontier_x = x
         self.last_y = y
 
@@ -54,3 +70,22 @@ class Terrain:
             pygame.draw.polygon(screen, (110, 80, 50),
                                 [(sx0, sy0), (sx1, sy1), (sx1, HEIGHT), (sx0, HEIGHT)])
             pygame.draw.line(screen, (80, 55, 30), (sx0, sy0), (sx1, sy1), 4)
+    
+    def siguiente_estado(self):
+        self.segs_en_estado += 1
+
+        if self.estado == 0:
+            if self.segs_en_estado >= self.segs_para_rampa:
+                self.estado = 1
+                self.segs_en_estado = 0
+
+        elif self.estado == 1:
+            if self.segs_en_estado >= 2:          
+                self.estado = 2
+                self.segs_en_estado = 0
+
+        elif self.estado == 2:
+            if self.segs_en_estado >= 2:          
+                self.estado = 0
+                self.segs_en_estado = 0
+                self.segs_para_rampa = random.randint(5, 9)  
