@@ -23,9 +23,7 @@ class Terrain:
         self.estado          = 0
         self.segs_en_estado  = 0       
         self.segs_para_rampa = random.randint(5, 9)  
-        self.generate_up_to(MARGEN_TERRENO)
-
-
+        self.generar(MARGEN_TERRENO)
 
     def crear_segmento(self, x0, y0, x1, y1, tipo=0):
         shape = pymunk.Segment(self.space.static_body, (x0, y0), (x1, y1), 5)
@@ -33,7 +31,7 @@ class Terrain:
         self.space.add(shape)
         self.segmentos.append({'shape': shape, 'x0': x0, 'y0': y0, 'x1': x1, 'y1': y1})
 
-    def generate_up_to(self, target_x):
+    def generar(self, target_x):
         x, y = self.frontier_x, self.last_y
         while x < target_x:
             next_x = x + SEG_WIDTH
@@ -56,8 +54,8 @@ class Terrain:
 
     def update(self, moto_x):
         if self.frontier_x < moto_x + MARGEN_TERRENO:
-            self.generate_up_to(moto_x + MARGEN_TERRENO)
-        cutoff = moto_x - 20000 # espacio trasero
+            self.generar(moto_x + MARGEN_TERRENO)
+        cutoff = moto_x - 20000
         to_remove = [s for s in self.segmentos if s['x1'] < cutoff]
         for s in to_remove:
             self.space.remove(s['shape'])
@@ -69,9 +67,9 @@ class Terrain:
             sx1, sy1 = to_pygame((s['x1'], s['y1']), camera_x, camera_y)
             if sx1 < -50 or sx0 > WIDTH + 50:
                 continue
-            pygame.draw.polygon(screen, (110, 80, 50),
+            pygame.draw.polygon(screen, (55, 15, 10),
                                 [(sx0, sy0), (sx1, sy1), (sx1, HEIGHT), (sx0, HEIGHT)])
-            pygame.draw.line(screen, (80, 55, 30), (sx0, sy0), (sx1, sy1), 4)
+            pygame.draw.line(screen, (25, 5, 3), (sx0, sy0), (sx1, sy1), 4)
     
     def siguiente_estado(self):
         self.segs_en_estado += 1

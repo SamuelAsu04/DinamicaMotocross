@@ -9,7 +9,6 @@ moto_SIZE    = (80, 70)
 moto_MASS    = 150.0
 moto_MOMENTO = pymunk.moment_for_box(moto_MASS, moto_SIZE)
 
-
 # RUEDAS
 
 rueda_RADIUS       = 16
@@ -40,7 +39,7 @@ SUSPENSION_DAMPING   = 500
 
 # INCLINACIOn
 
-LEAN_TORQUE = 500_000  
+INCLINACION_TORQUE = 500_000  
 
 # SPRITES 
 

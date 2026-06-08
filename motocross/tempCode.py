@@ -1,2 +1,4 @@
-             moto.torque       += tau_chasis
-                    rear_wheel.torque += -tau_chasis
+if fondo_img:
+            screen.blit(fondo_img, (0, 0))
+        else:
+            screen.fill((135, 206, 235))

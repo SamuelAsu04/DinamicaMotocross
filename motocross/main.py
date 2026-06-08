@@ -6,7 +6,7 @@ import propiedades_moto as pm
 
 from camara import Camera
 from moto import Moto
-from dibujado import draw_bike
+from dibujado import draw_moto
 from terreno import propiedades_segmentos, Terrain, SUELO_y
 from colisiones_handler import registrar_handlers, estado_juego
 from aerodinamica import Aerodinamica
@@ -17,31 +17,37 @@ aero = Aerodinamica()
 WIDTH, HEIGHT = 1200, 600
 FPS = 60
 
-GRAVEDAD    = (0, -900)
 AERO        = 0.05          # escala m/px para el drag
 
 
-
-
 def main():
+
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption("Motocross 2D")
+    try:
+        fondo_img = pygame.image.load("motocross/fondo.png").convert()
+        fondo_img = pygame.transform.smoothscale(fondo_img, (WIDTH, HEIGHT))
+    except (pygame.error, FileNotFoundError):
+        fondo_img = None  
+    pygame.display.set_caption("Motocross 2D - Proyecto Final")
     clock = pygame.time.Clock()
     font  = pygame.font.SysFont(None, 22)
 
     space = pymunk.Space()
-    space.gravity = GRAVEDAD
+    space.gravity = (0, -900)
 
+    # Manejadores
     registrar_handlers(
         space,
         ruedas_ct   = pm.ruedas_propiedades,
         terrenos_ct = propiedades_segmentos
     )
 
+    # Objetos Principales
     terrain     = Terrain(space)
     moto_objeto = Moto(space, position=(200, SUELO_y + 200))
-    camara = Camera()
+    camara      = Camera()
+
     running = True
     while running:
         dt = 1.0 / FPS
@@ -55,61 +61,57 @@ def main():
                 elif event.key == pygame.K_r:
                     moto_objeto.reset()
 
-        keys = pygame.key.get_pressed()
+        
         moto = moto_objeto.body
         rueda_trasera = moto_objeto.ruedas[0]['body']
 
-        # acelerador: RIGHT avanza, LEFT frena / marcha atras (mas suave)
+        # Controles
+        keys = pygame.key.get_pressed()
         if keys[pygame.K_RIGHT]:
-            throttle = 1.0
+            acelerador = 1.0
         elif keys[pygame.K_LEFT]:
-            throttle = -0.4
+            acelerador = -0.4
         else:
-            throttle = 0.0
+            acelerador = 0.0
 
-        lean_back  = keys[pygame.K_UP]
-        lean_fwd   = keys[pygame.K_DOWN]
-        lean_state = 'back' if lean_back else 'fwd' if lean_fwd else 'neutral'
+        inclinacion_back  = keys[pygame.K_UP]
+        inclinacion_fwd   = keys[pygame.K_DOWN]
+        inclinacion_state = 'back' if inclinacion_back else 'fwd' if inclinacion_fwd else 'neutral'
 
         aire = (estado_juego['contactos_activos'] == 0)
 
         sub_dt = dt / 4
         fx = fy = 0.0
+        
         for _ in range(4):
             if aire:
-                # --- Control de pitcheo por PAR INTERNO (chasis <-> rueda) ---
-                # No hay par externo => L del sistema se CONSERVA. Sin autonivelado.
-                # Tope de giro: si ya gira al maximo, dejamos de dar par (NO se reescribe omega).
                 tau_chasis = 0.0
-                if lean_back:
-                    tau_chasis = +pm.PILOT_TORQUE      # morro arriba (backflip)
-                elif lean_fwd:
-                    tau_chasis = -pm.PILOT_TORQUE      # morro abajo
+                if inclinacion_back:
+                    tau_chasis = +pm.PILOT_TORQUE     
+                elif inclinacion_fwd:
+                    tau_chasis = -pm.PILOT_TORQUE 
 
                 if tau_chasis != 0.0 and abs(moto.angular_velocity) < pm.OMEGA_MAX_AIRE:
                     moto.torque          += tau_chasis
                     rueda_trasera.torque += -tau_chasis
             else:
-                # --- Traccion por PAR en tierra ---
-                # El patinaje EMERGE del cono de friccion de pymunk; aqui solo
-                # cambiamos mu_s<->mu_k y recortamos el par si la rueda patina (control de traccion).
+        
                 vel_rueda      = abs(rueda_trasera.angular_velocity) * pm.rueda_RADIUS
                 velocidad_moto = moto.velocity.length
                 patinando      = (vel_rueda - velocidad_moto) > pm.SLIP_UMBRAL
                 moto_objeto.set_patinaje(patinando)
 
-                T = throttle * pm.PAR_MOTOR
-                if patinando and throttle > 0:
+                T = acelerador * pm.PAR_MOTOR
+                if patinando and acelerador > 0:
                     T *= pm.FACTOR_TRACCION
-                rueda_trasera.torque += -T             # -T => la rueda rueda hacia +x (avance)
+                rueda_trasera.torque += -T             
 
-                # cambio de peso al inclinar en tierra (opcional, como tenias)
-                if lean_back:
-                    moto.torque += pm.LEAN_TORQUE
-                elif lean_fwd:
-                    moto.torque += -pm.LEAN_TORQUE
 
-            # --- Drag aerodinamico (siempre): limitador natural de la velocidad punta ---
+                if inclinacion_back:
+                    moto.torque += pm.INCLINACION_TORQUE
+                elif inclinacion_fwd:
+                    moto.torque += -pm.INCLINACION_TORQUE
+
             v = moto_objeto.body.velocity
             fx, fy = aero.fuerza_drag((v.x * AERO, v.y * AERO), area=1, Cd=0.6)
             moto_objeto.body.apply_force_at_local_point((fx / AERO, fy / AERO), (0, 0))
@@ -118,12 +120,16 @@ def main():
 
         moto_x, moto_y = moto.position
 
+        # Actualizaciones
         camara.actu_camara(moto_x, moto_y)
         terrain.update(moto_x)
 
-        screen.fill((180, 210, 240))
+        if fondo_img:
+            screen.blit(fondo_img, (0, 0))
+        else:
+            screen.fill((135, 206, 235))
         terrain.draw(screen, camara.x, camara.y)
-        draw_bike(screen, moto_objeto, lean_state, camara.x, camara.y)
+        draw_moto(screen, moto_objeto, inclinacion_state, camara.x, camara.y)
 
         L = moto_objeto.momento_angular()
 
@@ -135,6 +141,7 @@ def main():
             f"L = {L:.1f} kg·px²/s   ω = {moto.angular_velocity:.2f} rad/s   {'EN AIRE' if aire else 'en suelo'}",
             f"Drag: {abs(fx / AERO):.0f}"
         ]
+
         for i, line in enumerate(hud):
             screen.blit(font.render(line, True, (20, 20, 20)), (10, 10 + i * 22))
 

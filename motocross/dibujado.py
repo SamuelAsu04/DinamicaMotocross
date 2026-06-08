@@ -72,7 +72,7 @@ def draw_rueda_placeholder(screen, body, camera_x, camera_y=0):
     ey = center[1] - int(pm.rueda_RADIUS * math.sin(body.angle))
     pygame.draw.line(screen, (255, 230, 60), center, (ex, ey), 2)
 
-def draw_bike(screen, bike, lean_state, camera_x=0, camera_y=0):  
+def draw_moto(screen, bike, lean_state, camera_x=0, camera_y=0):  
     assets = load_assets()
     rueda_img = assets.get('rueda')
     for w in bike.ruedas:
