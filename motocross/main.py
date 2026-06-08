@@ -20,6 +20,7 @@ FPS = 60
 GRAVEDAD        = (0, -900)
 MOTOR_MAX_FORCE = 2_000_000
 LEAN_TORQUE     = 500_000
+AERO = 0.05
 
 def main():
     pygame.init()
@@ -61,7 +62,7 @@ def main():
             motor.rate = -50
             motor.max_force = MOTOR_MAX_FORCE
         elif keys[pygame.K_RIGHT]:
-            motor.rate = 200
+            motor.rate = 80
             motor.max_force = MOTOR_MAX_FORCE
         else:
             motor.rate = 0
@@ -75,12 +76,18 @@ def main():
         
         sub_dt = dt / 4
         for _ in range(4):
-            if aire: 
-                motor.max_force = 0 
+            if aire:
+                motor.max_force = 0
+                rear_wheel = moto_objeto.ruedas[0]['body']
+
+                tau_chasis = 0.0
                 if lean_back:
-                    moto.torque = pm.TORQUE_AIRE
+                    tau_chasis = +pm.PILOT_TORQUE      # morro arriba (backflip)
                 elif lean_fwd:
-                    moto.torque = -pm.TORQUE_AIRE
+                    tau_chasis = -pm.PILOT_TORQUE      # morro abajo
+                if tau_chasis != 0.0 and abs(moto.angular_velocity) < pm.OMEGA_MAX_AIRE:
+                    moto.torque       += tau_chasis
+                    rear_wheel.torque += -tau_chasis
                 else:
                   
                     moto.torque = -pm.ESTABILIZACION * moto.angular_velocity
@@ -91,16 +98,16 @@ def main():
                     moto.torque = LEAN_TORQUE
                 elif lean_fwd:
                     moto.torque = -LEAN_TORQUE
-           
-            v = moto_objeto.body.velocity
-            v_ms = (v.x * 0.1, v.y * 0.1)  
+          
+            #v = moto_objeto.body.velocity
+            #v_ms = (v.x * AERO, v.y * AERO)  
 
-            fx, fy = aero.fuerza_drag(v_ms, area=1, Cd=0.6)
+            #fx, fy = aero.fuerza_drag(v_ms, area=1, Cd=0.6)
 
             # reescalar la fuerza de vuelta a unidades del juego
-            moto_objeto.body.apply_force_at_local_point(
-                (fx / 0.1, fy / 0.1), (0, 0)
-            )
+            #moto_objeto.body.apply_force_at_local_point(
+            #    (fx /AERO, fy /AERO), (0, 0)
+            #)
 
             rueda_trasera = moto_objeto.ruedas[0]['body']
             velocidad_moto = moto_objeto.body.velocity.length
@@ -131,7 +138,7 @@ def main():
             f"Distancia: {int(moto_x)} px",
             f"Impulso aterrizaje: {estado_juego['ultimo_impulso']:.0f}   "
             f"L = {L:.1f} kg·px²/s   ω = {moto.angular_velocity:.2f} rad/s   {'EN AIRE' if aire else 'en suelo'}",
-            f"Drag: {abs(fx/0.1):.0f}"
+            #f"Drag: {abs(fx/AERO):.0f}"
         ]
         for i, line in enumerate(hud):
             screen.blit(font.render(line, True, (20, 20, 20)), (10, 10 + i * 22))

@@ -21,8 +21,13 @@ def scale_to_width(surface, target_width):
     target_height = max(1, int(h * target_width / w))
     return pygame.transform.smoothscale(surface, (target_width, target_height))
 
+ASSETS = None  
 
 def load_assets():
+    global ASSETS
+    if ASSETS is not None:         
+        return ASSETS
+
     assets = {}
     for key, path in ASSET_PATHS.items():
         try:
@@ -32,6 +37,8 @@ def load_assets():
         except (pygame.error, FileNotFoundError) as e:
             print(f"[aviso] No se pudo cargar '{path}' ({e}). Uso placeholder.")
             assets[key] = None
+
+    ASSETS = assets                 
     return assets
 
 def to_pygame(p, camera_x=0, camera_y=0):

@@ -64,8 +64,19 @@ class Moto:
             w['body'].angular_velocity = 0
 
     def momento_angular(self):
-        "L = I · ω"
-        return pm.moto_MOMENTO * self.body.angular_velocity
+        """L_z del sistema (chasis + 2 ruedas) respecto a su CM. Se conserva en el aire."""
+        bodies = [self.body] + [w['body'] for w in self.ruedas]
+        M   = sum(b.mass for b in bodies)
+        cmx = sum(b.mass * b.position.x for b in bodies) / M
+        cmy = sum(b.mass * b.position.y for b in bodies) / M
+        vcx = sum(b.mass * b.velocity.x for b in bodies) / M
+        vcy = sum(b.mass * b.velocity.y for b in bodies) / M
+        L = 0.0
+        for b in bodies:
+            rx, ry = b.position.x - cmx, b.position.y - cmy
+            vx, vy = b.velocity.x - vcx, b.velocity.y - vcy
+            L += b.moment * b.angular_velocity + (rx * vy - ry * vx) * b.mass
+        return L
     
     def set_patinaje(self, patinando: bool):
         """Cambia µ de la rueda trasera según si patina o no."""
