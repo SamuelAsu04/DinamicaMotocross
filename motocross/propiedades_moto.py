@@ -9,8 +9,9 @@ rueda_RADIUS      = 16
 rueda_MASS        = 1.0
 rueda_FRICTION    = 1.5
 rueda_ELASTICITY  = 0.2
-
 rueda_OFFSET_X       = 36
+rueda_FRICTION_DIN = 0.6   # µ dinámico (~40% menos)
+MOTOR_RATE_PATINAJE = 80   # velocidad angular que dispara el patinaje
 
 TORQUE_AIRE     = 40_000   # torque que puede aplicar el piloto en el aire (menor que en suelo)
 OMEGA_MAX_AIRE  = 4.0      # límite de velocidad angular en el aire [rad/s]

@@ -44,7 +44,7 @@ class Moto:
                 pm.SUSPENSION_LENGTH, pm.SUSPENSION_STIFFNESS, pm.SUSPENSION_DAMPING,
             )
             space.add(groove, spring)
-            self.ruedas.append({'body': rueda, 'side': side, 'offset_x': offset_x})
+            self.ruedas.append({'body': rueda, 'shape': rueda_shape, 'side': side, 'offset_x': offset_x})
 
         rear_rueda  = self.ruedas[0]['body']
         self.motor  = pymunk.SimpleMotor(self.body, rear_rueda, 0)
@@ -66,3 +66,11 @@ class Moto:
     def momento_angular(self):
         "L = I · ω"
         return pm.moto_MOMENTO * self.body.angular_velocity
+    
+    def set_patinaje(self, patinando: bool):
+        """Cambia µ de la rueda trasera según si patina o no."""
+        rueda_trasera = self.ruedas[0]  # side=1 es la trasera
+        if patinando:
+            rueda_trasera['shape'].friction = pm.rueda_FRICTION_DIN
+        else:
+            rueda_trasera['shape'].friction = pm.rueda_FRICTION

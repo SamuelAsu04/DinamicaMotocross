@@ -41,10 +41,10 @@ class Terrain:
             if self.estado == 0:
                 next_y = max(TERRAIN_MIN_Y, y + random.uniform(-TERRAIN_AMP, TERRAIN_AMP))
             elif self.estado == 1:
-                next_y = max(TERRAIN_MIN_Y, y + random.uniform(60, 100))  # sube fuerte
+                next_y = max(TERRAIN_MIN_Y, y + random.uniform(60, 100))  # subida
 
             elif self.estado == 2:
-                next_y = y + random.uniform(-40, -10)  # baja suave
+                next_y = y + random.uniform(-120, -20)  # bajada
 
             self.crear_segmento(x, y, next_x, next_y, self.estado)
             self.siguiente_estado()
@@ -81,12 +81,12 @@ class Terrain:
                 self.segs_en_estado = 0
 
         elif self.estado == 1:
-            if self.segs_en_estado >= 2:          
+            if self.segs_en_estado >= 3:          
                 self.estado = 2
                 self.segs_en_estado = 0
 
         elif self.estado == 2:
-            if self.segs_en_estado >= 2:          
+            if self.segs_en_estado >= 5:          
                 self.estado = 0
                 self.segs_en_estado = 0
-                self.segs_para_rampa = random.randint(5, 9)  
+                self.segs_para_rampa = random.randint(6, 12)  

@@ -9,13 +9,16 @@ from moto import Moto
 from dibujado import draw_bike
 from terreno import propiedades_segmentos, Terrain, SUELO_y
 from colisiones_handler import registrar_handlers, estado_juego
+from aerodinamica import Aerodinamica
 
+
+aero = Aerodinamica()
 
 WIDTH, HEIGHT = 1200, 600
 FPS = 60
 
 GRAVEDAD        = (0, -900)
-MOTOR_MAX_FORCE = 80_000
+MOTOR_MAX_FORCE = 500_000
 LEAN_TORQUE     = 80_000
 
 def main():
@@ -48,7 +51,7 @@ def main():
                 if event.key == pygame.K_ESCAPE:
                     running = False
                 elif event.key == pygame.K_r:
-                    moto_objeto.reset(moto_objeto)
+                    moto_objeto.reset()
 
         keys  = pygame.key.get_pressed()
         motor = moto_objeto.motor
@@ -58,7 +61,7 @@ def main():
             motor.rate = -50
             motor.max_force = MOTOR_MAX_FORCE
         elif keys[pygame.K_RIGHT]:
-            motor.rate = 50
+            motor.rate = 200
             motor.max_force = MOTOR_MAX_FORCE
         else:
             motor.rate = 0
@@ -79,16 +82,34 @@ def main():
                 elif lean_fwd:
                     moto.torque = -pm.TORQUE_AIRE
                 else:
-                    # estabilización suave hacia horizontal
+                  
                     moto.torque = -pm.ESTABILIZACION * moto.angular_velocity
 
-                 # limitar omega máxima
                 moto.angular_velocity = max(-pm.OMEGA_MAX_AIRE, min(pm.OMEGA_MAX_AIRE, moto.angular_velocity))
             else:
                 if lean_back:
                     moto.torque = LEAN_TORQUE
                 elif lean_fwd:
                     moto.torque = -LEAN_TORQUE
+           
+            v = moto_objeto.body.velocity
+            v_ms = (v.x * 0.1, v.y * 0.1)  
+
+            fx, fy = aero.fuerza_drag(v_ms, area=1, Cd=0.6)
+
+            # reescalar la fuerza de vuelta a unidades del juego
+            moto_objeto.body.apply_force_at_local_point(
+                (fx / 0.1, fy / 0.1), (0, 0)
+            )
+
+            rueda_trasera = moto_objeto.ruedas[0]['body']
+            velocidad_moto = moto_objeto.body.velocity.length
+
+            # la rueda patiná si gira mucho más rápido que la velocidad del vehículo
+            vel_rueda = abs(rueda_trasera.angular_velocity) * pm.rueda_RADIUS
+            patinando = (vel_rueda > velocidad_moto + pm.MOTOR_RATE_PATINAJE) and not aire
+
+            moto_objeto.set_patinaje(patinando)
             space.step(sub_dt)
 
         
@@ -110,6 +131,7 @@ def main():
             f"Distancia: {int(moto_x)} px",
             f"Impulso aterrizaje: {estado_juego['ultimo_impulso']:.0f}   "
             f"L = {L:.1f} kg·px²/s   ω = {moto.angular_velocity:.2f} rad/s   {'EN AIRE' if aire else 'en suelo'}",
+            f"Drag: {abs(fx/0.1):.0f}"
         ]
         for i, line in enumerate(hud):
             screen.blit(font.render(line, True, (20, 20, 20)), (10, 10 + i * 22))
