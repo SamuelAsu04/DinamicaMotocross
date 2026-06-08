@@ -1,11 +1,12 @@
 import math
 import sys
-import pygame
-import pymunk
+import pygame # type: ignore
+import pymunk # type: ignore
 import propiedades_moto as pm
 
 from camara import Camera
-from moto import crear_moto, reset_bike, draw_bike, momento_angular_chasis
+from moto import Moto
+from dibujado import draw_bike
 from terreno import propiedades_segmentos, Terrain, SUELO_y
 from colisiones_handler import registrar_handlers, estado_juego
 
@@ -34,7 +35,7 @@ def main():
     )
 
     terrain     = Terrain(space)
-    moto_objeto = crear_moto(space, position=(200, SUELO_y + 200))
+    moto_objeto = Moto(space, position=(200, SUELO_y + 200))
     camara = Camera()
     running = True
     while running:
@@ -47,11 +48,11 @@ def main():
                 if event.key == pygame.K_ESCAPE:
                     running = False
                 elif event.key == pygame.K_r:
-                    reset_bike(moto_objeto)
+                    moto_objeto.reset(moto_objeto)
 
         keys  = pygame.key.get_pressed()
-        motor = moto_objeto['motor']
-        moto  = moto_objeto['moto']
+        motor = moto_objeto.motor
+        moto  = moto_objeto.body
 
         if keys[pygame.K_LEFT]:
             motor.rate = -50
@@ -101,7 +102,7 @@ def main():
         terrain.draw(screen, camara.x, camara.y)
         draw_bike(screen, moto_objeto, lean_state, camara.x, camara.y)
 
-        L = momento_angular_chasis(moto)
+        L = moto_objeto.momento_angular()
         
         hud = [
             f"Velocidad: {moto.velocity.length:6.1f} px/s   "

@@ -1,8 +1,9 @@
 import random
-import pygame
-import pymunk
+import pygame # type: ignore
+import pymunk # type: ignore
 
-from moto import WIDTH, HEIGHT, to_pygame
+from moto import WIDTH, HEIGHT
+from dibujado import  to_pygame
 
 SEG_WIDTH      = 200
 MARGEN_TERRENO  = 4000
