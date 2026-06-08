@@ -18,8 +18,8 @@ WIDTH, HEIGHT = 1200, 600
 FPS = 60
 
 GRAVEDAD        = (0, -900)
-MOTOR_MAX_FORCE = 500_000
-LEAN_TORQUE     = 80_000
+MOTOR_MAX_FORCE = 2_000_000
+LEAN_TORQUE     = 500_000
 
 def main():
     pygame.init()
