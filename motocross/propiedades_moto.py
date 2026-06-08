@@ -1,28 +1,48 @@
 import math
-import pygame
-import pymunk
+import pygame   # type: ignore
+import pymunk  # type: ignore
 
-moto_SIZE   = (80, 70)
-moto_MASS   = 150.0
+
+# CHASIS / MOTO
+
+moto_SIZE    = (80, 70)
+moto_MASS    = 150.0
 moto_MOMENTO = pymunk.moment_for_box(moto_MASS, moto_SIZE)
-rueda_RADIUS      = 16
-rueda_MASS        = 15.0
-rueda_FRICTION    = 1.2
-rueda_ELASTICITY  = 0.2
-rueda_OFFSET_X       = 36
-rueda_FRICTION_DIN = 0.9   # µ dinámico (~40% menos)
-MOTOR_RATE_PATINAJE = 80   # velocidad angular que dispara el patinaje
-PILOT_TORQUE   = 600_000   # par del piloto sobre el chasis en el aire (antes TORQUE_AIRE=300_000)
-                           # 600k ~= 88deg/s de pitcheo; sube/baja para mas o menos autoridad
-OMEGA_MAX_AIRE = 4.0  
-TORQUE_AIRE     = 300_000   # torque que puede aplicar el piloto en el aire (menor que en suelo)
-OMEGA_MAX_AIRE  = 4.0      # límite de velocidad angular en el aire [rad/s]
-ESTABILIZACION  = 100_000   # torque suave que intenta nivelar la moto al soltar controles
+
+
+# RUEDAS
+
+rueda_RADIUS       = 16
+rueda_MASS         = 15.0
+rueda_FRICTION     = 1.2        # u estatico
+rueda_FRICTION_DIN = 0.9        # u dinamico 
+rueda_ELASTICITY   = 0.2
+rueda_OFFSET_X     = 36
+ruedas_propiedades = [1, 2]
+
+# MOTOR y TRACCION
+
+PAR_MOTOR           = 1200000  
+FACTOR_TRACCION     = 0.4  
+SLIP_UMBRAL         = 40       
+MOTOR_RATE_PATINAJE = 80        
+
+# CONTROL EN EL AIRE
+
+PILOT_TORQUE   = 600_000  
+OMEGA_MAX_AIRE = 4.0       
+
+# SUSPENSION
+
 SUSPENSION_LENGTH    = 24
-SUSPENSION_STIFFNESS = 30_000   
-SUSPENSION_DAMPING   = 500      
+SUSPENSION_STIFFNESS = 30_000
+SUSPENSION_DAMPING   = 500
+
+# INCLINACIOn
+
+LEAN_TORQUE = 500_000  
+
+# SPRITES 
 
 rueda_SPRITE_DIAMETER = 2 * rueda_RADIUS + 4
-BIKE_SPRITE_WIDTH     = 110
-
-ruedas_propiedades = [1,2]
+moto_SPRITE_WIDTH     = 110

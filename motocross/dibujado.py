@@ -32,7 +32,7 @@ def load_assets():
     for key, path in ASSET_PATHS.items():
         try:
             img = pygame.image.load(path).convert_alpha()
-            target = pm.rueda_SPRITE_DIAMETER if key == 'rueda' else pm.BIKE_SPRITE_WIDTH
+            target = pm.rueda_SPRITE_DIAMETER if key == 'rueda' else pm.moto_SPRITE_WIDTH
             assets[key] = scale_to_width(img, target)
         except (pygame.error, FileNotFoundError) as e:
             print(f"[aviso] No se pudo cargar '{path}' ({e}). Uso placeholder.")

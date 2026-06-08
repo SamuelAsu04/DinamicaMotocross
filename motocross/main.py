@@ -17,10 +17,11 @@ aero = Aerodinamica()
 WIDTH, HEIGHT = 1200, 600
 FPS = 60
 
-GRAVEDAD        = (0, -900)
-MOTOR_MAX_FORCE = 2_000_000
-LEAN_TORQUE     = 500_000
-AERO = 0.05
+GRAVEDAD    = (0, -900)
+AERO        = 0.05          # escala m/px para el drag
+
+
+
 
 def main():
     pygame.init()
@@ -28,7 +29,7 @@ def main():
     pygame.display.set_caption("Motocross 2D")
     clock = pygame.time.Clock()
     font  = pygame.font.SysFont(None, 22)
-    
+
     space = pymunk.Space()
     space.gravity = GRAVEDAD
 
@@ -54,75 +55,69 @@ def main():
                 elif event.key == pygame.K_r:
                     moto_objeto.reset()
 
-        keys  = pygame.key.get_pressed()
-        motor = moto_objeto.motor
-        moto  = moto_objeto.body
+        keys = pygame.key.get_pressed()
+        moto = moto_objeto.body
+        rueda_trasera = moto_objeto.ruedas[0]['body']
 
-        if keys[pygame.K_LEFT]:
-            motor.rate = -50
-            motor.max_force = MOTOR_MAX_FORCE
-        elif keys[pygame.K_RIGHT]:
-            motor.rate = 80
-            motor.max_force = MOTOR_MAX_FORCE
+        # acelerador: RIGHT avanza, LEFT frena / marcha atras (mas suave)
+        if keys[pygame.K_RIGHT]:
+            throttle = 1.0
+        elif keys[pygame.K_LEFT]:
+            throttle = -0.4
         else:
-            motor.rate = 0
-            motor.max_force = 0
+            throttle = 0.0
 
         lean_back  = keys[pygame.K_UP]
         lean_fwd   = keys[pygame.K_DOWN]
         lean_state = 'back' if lean_back else 'fwd' if lean_fwd else 'neutral'
 
         aire = (estado_juego['contactos_activos'] == 0)
-        
+
         sub_dt = dt / 4
+        fx = fy = 0.0
         for _ in range(4):
             if aire:
-                motor.max_force = 0
-                rear_wheel = moto_objeto.ruedas[0]['body']
-
+                # --- Control de pitcheo por PAR INTERNO (chasis <-> rueda) ---
+                # No hay par externo => L del sistema se CONSERVA. Sin autonivelado.
+                # Tope de giro: si ya gira al maximo, dejamos de dar par (NO se reescribe omega).
                 tau_chasis = 0.0
                 if lean_back:
                     tau_chasis = +pm.PILOT_TORQUE      # morro arriba (backflip)
                 elif lean_fwd:
                     tau_chasis = -pm.PILOT_TORQUE      # morro abajo
+
                 if tau_chasis != 0.0 and abs(moto.angular_velocity) < pm.OMEGA_MAX_AIRE:
-                    moto.torque       += tau_chasis
-                    rear_wheel.torque += -tau_chasis
-                else:
-                  
-                    moto.torque = -pm.ESTABILIZACION * moto.angular_velocity
-
-                moto.angular_velocity = max(-pm.OMEGA_MAX_AIRE, min(pm.OMEGA_MAX_AIRE, moto.angular_velocity))
+                    moto.torque          += tau_chasis
+                    rueda_trasera.torque += -tau_chasis
             else:
+                # --- Traccion por PAR en tierra ---
+                # El patinaje EMERGE del cono de friccion de pymunk; aqui solo
+                # cambiamos mu_s<->mu_k y recortamos el par si la rueda patina (control de traccion).
+                vel_rueda      = abs(rueda_trasera.angular_velocity) * pm.rueda_RADIUS
+                velocidad_moto = moto.velocity.length
+                patinando      = (vel_rueda - velocidad_moto) > pm.SLIP_UMBRAL
+                moto_objeto.set_patinaje(patinando)
+
+                T = throttle * pm.PAR_MOTOR
+                if patinando and throttle > 0:
+                    T *= pm.FACTOR_TRACCION
+                rueda_trasera.torque += -T             # -T => la rueda rueda hacia +x (avance)
+
+                # cambio de peso al inclinar en tierra (opcional, como tenias)
                 if lean_back:
-                    moto.torque = LEAN_TORQUE
+                    moto.torque += pm.LEAN_TORQUE
                 elif lean_fwd:
-                    moto.torque = -LEAN_TORQUE
-          
-            #v = moto_objeto.body.velocity
-            #v_ms = (v.x * AERO, v.y * AERO)  
+                    moto.torque += -pm.LEAN_TORQUE
 
-            #fx, fy = aero.fuerza_drag(v_ms, area=1, Cd=0.6)
+            # --- Drag aerodinamico (siempre): limitador natural de la velocidad punta ---
+            v = moto_objeto.body.velocity
+            fx, fy = aero.fuerza_drag((v.x * AERO, v.y * AERO), area=1, Cd=0.6)
+            moto_objeto.body.apply_force_at_local_point((fx / AERO, fy / AERO), (0, 0))
 
-            # reescalar la fuerza de vuelta a unidades del juego
-            #moto_objeto.body.apply_force_at_local_point(
-            #    (fx /AERO, fy /AERO), (0, 0)
-            #)
-
-            rueda_trasera = moto_objeto.ruedas[0]['body']
-            velocidad_moto = moto_objeto.body.velocity.length
-
-            # la rueda patiná si gira mucho más rápido que la velocidad del vehículo
-            vel_rueda = abs(rueda_trasera.angular_velocity) * pm.rueda_RADIUS
-            patinando = (vel_rueda > velocidad_moto + pm.MOTOR_RATE_PATINAJE) and not aire
-
-            moto_objeto.set_patinaje(patinando)
             space.step(sub_dt)
 
-        
-    
-        moto_x,  moto_y = moto.position
-        
+        moto_x, moto_y = moto.position
+
         camara.actu_camara(moto_x, moto_y)
         terrain.update(moto_x)
 
@@ -131,14 +126,14 @@ def main():
         draw_bike(screen, moto_objeto, lean_state, camara.x, camara.y)
 
         L = moto_objeto.momento_angular()
-        
+
         hud = [
             f"Velocidad: {moto.velocity.length:6.1f} px/s   "
             f"Angulo: {math.degrees(moto.angle):5.1f}°   "
             f"Distancia: {int(moto_x)} px",
             f"Impulso aterrizaje: {estado_juego['ultimo_impulso']:.0f}   "
             f"L = {L:.1f} kg·px²/s   ω = {moto.angular_velocity:.2f} rad/s   {'EN AIRE' if aire else 'en suelo'}",
-            #f"Drag: {abs(fx/AERO):.0f}"
+            f"Drag: {abs(fx / AERO):.0f}"
         ]
         for i, line in enumerate(hud):
             screen.blit(font.render(line, True, (20, 20, 20)), (10, 10 + i * 22))

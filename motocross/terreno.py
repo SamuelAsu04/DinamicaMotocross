@@ -39,13 +39,13 @@ class Terrain:
             next_x = x + SEG_WIDTH
 
             if self.estado == 1:
-                next_y = y + random.uniform(60, 100)      # subida
+                next_y = y + random.uniform(60, 100)     
             elif self.estado == 2:
-                next_y = y + random.uniform(-120, -20)    # bajada
-            else:                                          # estado 0 (llano) y cualquier estado inesperado
+                next_y = y + random.uniform(-120, -20)    
+            else:                                          
                 next_y = y + random.uniform(-TERRAIN_AMP, TERRAIN_AMP)
 
-            next_y = max(TERRAIN_MIN_Y, next_y)            # clamp UNICO para todos los estados
+            next_y = max(TERRAIN_MIN_Y, next_y)            
 
             self.crear_segmento(x, y, next_x, next_y, self.estado)
             self.siguiente_estado()

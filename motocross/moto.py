@@ -85,3 +85,19 @@ class Moto:
             rueda_trasera['shape'].friction = pm.rueda_FRICTION_DIN
         else:
             rueda_trasera['shape'].friction = pm.rueda_FRICTION
+            
+    def patina_trasera(self):
+        """True si la rueda trasera desliza respecto al suelo (slip > umbral)."""
+        rear   = self.ruedas[0]['body']
+        v_sup  = abs(rear.angular_velocity) * pm.rueda_RADIUS
+        v_moto = self.body.velocity.length
+        return (v_sup - v_moto) > pm.SLIP_UMBRAL
+
+    def aplicar_par_rueda(self, T):
+        """Tierra: par motor SOLO a la rueda. El caballito emerge de la traccion via el eje."""
+        self.ruedas[0]['body'].torque += -T      # -T => la rueda rueda hacia +x (avance)
+
+    def aplicar_par_aire(self, tau):
+        """Aire: par INTERNO chasis<->rueda. L del sistema se conserva (3a ley)."""
+        self.body.torque              += +tau
+        self.ruedas[0]['body'].torque += -tau
