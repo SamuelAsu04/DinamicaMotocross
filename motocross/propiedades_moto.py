@@ -23,8 +23,7 @@ rueda_OFFSET_X     = 36
 
 PAR_MOTOR           = 1200000  
 FACTOR_TRACCION     = 0.4  
-SLIP_UMBRAL         = 40       
-MOTOR_RATE_PATINAJE = 80        
+SLIP_UMBRAL         = 40         
 moto_propiedades = [1, 2, 3]
 # CONTROL EN EL AIRE
 

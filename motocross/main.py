@@ -15,12 +15,14 @@ from confi import WIDTH, HEIGHT,FPS
 
 AERO        = 0.01        # escala m/px para el drag
 tiempo_volcada = 0.0
+PX_TO_M = 0.01
+
 def main():
 
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     try:
-        fondo_img = pygame.image.load("motocross/fondo.jpg").convert()
+        fondo_img = pygame.image.load("motocross/imagenes/fondo.png").convert()
         fondo_img = pygame.transform.smoothscale(fondo_img, (WIDTH, HEIGHT))
     except (pygame.error, FileNotFoundError):
         fondo_img = None  
@@ -139,13 +141,26 @@ def main():
 
         L = moto_objeto.momento_angular()
 
+        v_ms     = moto.velocity.length * PX_TO_M       # px/s -> m/s
+        v_kmh    = v_ms * 3.6                            # m/s  -> km/h
+        dist_m   = moto_x * PX_TO_M                      # px   -> m
+        altura_m = max(0.0, altura) * PX_TO_M            # altura sobre el suelo (m)
+        ang_deg  = math.degrees(moto.angle)             # ángulo del chasis (°)
+        L_si     = L * PX_TO_M**2                        # kg·px²/s -> kg·m²/s
+        imp_si   = estado_juego['ultimo_impulso'] * PX_TO_M   # kg·px/s -> N·s
+        drag_N   = math.hypot(fx, fy)                    # módulo de la fuerza de arrastre (N)
+        patina   = (not aire) and moto_objeto.patina_trasera()
+
         hud = [
-            f"Velocidad: {moto.velocity.length:6.1f} px/s   "
-            f"Angulo: {math.degrees(moto.angle):5.1f}°   "
-            f"Distancia: {int(moto_x)} px",
-            f"Impulso aterrizaje: {estado_juego['ultimo_impulso']:.0f}   "
-            f"L = {L:.1f} kg·px²/s   ω = {moto.angular_velocity:.2f} rad/s   {'EN AIRE' if aire else 'en suelo'}",
-            f"Drag: {abs(fx / AERO):.0f}"
+            f"Velocidad: {v_ms:5.1f} m/s ({v_kmh:5.1f} km/h)   "
+            f"Altura: {altura_m:4.2f} m   Distancia: {dist_m:6.1f} m",
+
+            f"Angulo: {ang_deg:6.1f}°   ω: {moto.angular_velocity:5.2f} rad/s   "
+            f"L: {L_si:7.3f} kg·m²/s   {'EN AIRE' if aire else 'EN SUELO'}",
+
+            f"Drag: {drag_N:5.1f} N   "
+            f"Impulso aterrizaje: {imp_si:5.1f} N·s   "
+            f"Tracción: {'PATINA' if patina else 'AGARRE'}",
         ]
 
         for i, line in enumerate(hud):

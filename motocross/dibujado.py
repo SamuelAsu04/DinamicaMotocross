@@ -6,10 +6,10 @@ from confi import WIDTH, HEIGHT,FPS
 
 
 ASSET_PATHS = {
-    'rueda':          'motocross/rueda.png',
-    'bike_neutral':   'motocross/bike1.png',
-    'bike_lean_back': 'motocross/bike3.png',
-    'bike_lean_fwd':  'motocross/bike2.png',
+    'rueda':          'motocross/imagenes/rueda.png',
+    'bike_neutral':   'motocross/imagenes/bike1.png',
+    'bike_lean_back': 'motocross/imagenes/bike3.png',
+    'bike_lean_fwd':  'motocross/imagenes/bike2.png',
 }
 
 ZOOM = 1.0
