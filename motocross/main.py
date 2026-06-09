@@ -3,10 +3,11 @@ import sys
 import pygame # type: ignore
 import pymunk # type: ignore
 import propiedades_moto as pm
+import dibujado
 
 from camara import Camera
 from moto import Moto
-from dibujado import draw_moto
+from dibujado import *
 from terreno import propiedades_segmentos, Terrain, SUELO_y
 from colisiones_handler import registrar_handlers, estado_juego
 from aerodinamica import Aerodinamica
@@ -19,7 +20,7 @@ def main():
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     try:
-        fondo_img = pygame.image.load("motocross/fondo.png").convert()
+        fondo_img = pygame.image.load("motocross/fondo.jpg").convert()
         fondo_img = pygame.transform.smoothscale(fondo_img, (WIDTH, HEIGHT))
     except (pygame.error, FileNotFoundError):
         fondo_img = None  
@@ -123,8 +124,11 @@ def main():
             tiempo_volcada = 0.0
 
         # Actualizaciones
-        camara.actu_camara(moto_x, moto_y)
+        altura = moto_y - terrain.altura_en(moto_x)     
+        camara.actu_camara(moto_x, moto_y, altura) 
         terrain.update(moto_x)
+
+        dibujado.ZOOM = camara.zoom   
 
         if fondo_img:
             screen.blit(fondo_img, (0, 0))

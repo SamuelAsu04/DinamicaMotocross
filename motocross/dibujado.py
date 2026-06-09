@@ -12,6 +12,7 @@ ASSET_PATHS = {
     'bike_lean_fwd':  'motocross/bike2.png',
 }
 
+ZOOM = 1.0
 
 def scale_to_width(surface, target_width):
     w, h = surface.get_size()
@@ -41,13 +42,16 @@ def load_assets():
     return assets
 
 def to_pygame(p, camera_x=0, camera_y=0):
-    return int(p[0] - camera_x), int(HEIGHT - p[1] + camera_y)
+    sx = p[0] - camera_x
+    sy = HEIGHT - p[1] + camera_y
+    cx, cy = WIDTH / 2, HEIGHT / 2          # centro = punto fijo del zoom
+    return int(cx + (sx - cx) * ZOOM), int(cy + (sy - cy) * ZOOM)
 
 # -----------------------------------------------------------------------------
 # Dibujar
 # -----------------------------------------------------------------------------
 def blit_rotated(screen, image, center_pygame, angle_radians):
-    rotated = pygame.transform.rotate(image, math.degrees(angle_radians))
+    rotated = pygame.transform.rotozoom(image, math.degrees(angle_radians), ZOOM)
     rect = rotated.get_rect(center=center_pygame)
     screen.blit(rotated, rect)
 
@@ -63,12 +67,13 @@ def draw_moto_placeholder(screen, moto, camera_x, camera_y=0):
     pygame.draw.polygon(screen, (200, 40, 40), corners)
     pygame.draw.polygon(screen, (30, 0, 0), corners, 2)
 
-def draw_rueda_placeholder(screen, body, camera_x, camera_y=0): 
-    center = to_pygame(body.position, camera_x, camera_y)  
-    pygame.draw.circle(screen, (35, 35, 35), center, pm.rueda_RADIUS)
-    pygame.draw.circle(screen, (160, 160, 160), center, pm.rueda_RADIUS, 2)
-    ex = center[0] + int(pm.rueda_RADIUS * math.cos(body.angle))
-    ey = center[1] - int(pm.rueda_RADIUS * math.sin(body.angle))
+def draw_rueda_placeholder(screen, body, camera_x, camera_y=0):
+    center = to_pygame(body.position, camera_x, camera_y)
+    r = max(1, int(pm.rueda_RADIUS * ZOOM))
+    pygame.draw.circle(screen, (35, 35, 35), center, r)
+    pygame.draw.circle(screen, (160, 160, 160), center, r, 2)
+    ex = center[0] + int(r * math.cos(body.angle))
+    ey = center[1] - int(r * math.sin(body.angle))
     pygame.draw.line(screen, (255, 230, 60), center, (ex, ey), 2)
 
 def draw_moto(screen, bike, lean_state, camera_x=0, camera_y=0):  
