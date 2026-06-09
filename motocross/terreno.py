@@ -2,7 +2,7 @@ import random
 import pygame # type: ignore
 import pymunk # type: ignore
 
-from moto import WIDTH, HEIGHT
+from confi import WIDTH, HEIGHT
 from dibujado import  to_pygame
 
 SEG_WIDTH      = 200

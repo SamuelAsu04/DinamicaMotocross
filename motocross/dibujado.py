@@ -2,9 +2,8 @@ import math
 import pygame # type: ignore
 import pymunk # type: ignore
 import propiedades_moto as pm
+from confi import WIDTH, HEIGHT,FPS
 
-WIDTH, HEIGHT = 1200, 600
-FPS = 60
 
 ASSET_PATHS = {
     'rueda':          'motocross/rueda.png',

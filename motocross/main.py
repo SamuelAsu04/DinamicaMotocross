@@ -10,16 +10,9 @@ from dibujado import draw_moto
 from terreno import propiedades_segmentos, Terrain, SUELO_y
 from colisiones_handler import registrar_handlers, estado_juego
 from aerodinamica import Aerodinamica
+from confi import WIDTH, HEIGHT,FPS
 
-
-aero = Aerodinamica()
-
-WIDTH, HEIGHT = 1200, 600
-FPS = 60
-
-AERO        = 0.05          # escala m/px para el drag
-
-
+AERO        = 0.01        # escala m/px para el drag
 def main():
 
     pygame.init()
@@ -47,6 +40,7 @@ def main():
     terrain     = Terrain(space)
     moto_objeto = Moto(space, position=(200, SUELO_y + 200))
     camara      = Camera()
+    aero = Aerodinamica()
 
     running = True
     while running:

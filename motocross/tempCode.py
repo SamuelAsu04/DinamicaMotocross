@@ -1,4 +1,7 @@
-if fondo_img:
-            screen.blit(fondo_img, (0, 0))
-        else:
-            screen.fill((135, 206, 235))
+
+
+from camara import Camera
+from moto import Moto
+from dibujado import draw_moto
+from terreno import propiedades_segmentos, Terrain, SUELO_y
+from colisiones_handler import registrar_handlers, estado_juego
