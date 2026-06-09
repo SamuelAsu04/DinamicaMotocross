@@ -5,12 +5,12 @@ estado_juego = {
     'contactos_activos': 0,
 }
 
-def registrar_handlers(space, ruedas_ct, terrenos_ct):
-    for rueda_ct in ruedas_ct:
+def registrar_handlers(space, cuerpos_ct, terrenos_ct):
+    for c_ct in cuerpos_ct:
         for terreno_ct in terrenos_ct:
-            crear_handler(space, rueda_ct, terreno_ct[2])
+            crear_handler(space, c_ct, terreno_ct[2])
 
-def crear_handler(space, rueda_ct, terreno_ct):
+def crear_handler(space, c_ct, terreno_ct):
     
     def begin(arbiter, space, data):
         estado_juego['contactos_activos'] += 1
@@ -27,4 +27,4 @@ def crear_handler(space, rueda_ct, terreno_ct):
             max(0, estado_juego['contactos_activos'] - 1)
         
 
-    space.on_collision(rueda_ct, terreno_ct, begin=begin,post_solve=post_solve,separate=separate)
+    space.on_collision(c_ct, terreno_ct, begin=begin,post_solve=post_solve,separate=separate)

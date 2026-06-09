@@ -17,7 +17,7 @@ rueda_FRICTION     = 1.2        # u estatico
 rueda_FRICTION_DIN = 0.9        # u dinamico 
 rueda_ELASTICITY   = 0.2
 rueda_OFFSET_X     = 36
-ruedas_propiedades = [1, 2]
+
 
 # MOTOR y TRACCION
 
@@ -25,7 +25,7 @@ PAR_MOTOR           = 1200000
 FACTOR_TRACCION     = 0.4  
 SLIP_UMBRAL         = 40       
 MOTOR_RATE_PATINAJE = 80        
-
+moto_propiedades = [1, 2, 3]
 # CONTROL EN EL AIRE
 
 PILOT_TORQUE   = 600_000  
@@ -45,3 +45,7 @@ INCLINACION_TORQUE = 500_000
 
 rueda_SPRITE_DIAMETER = 2 * rueda_RADIUS + 4
 moto_SPRITE_WIDTH     = 110
+
+# VUELCO / RESET
+VUELCO_ANGULO = math.radians(110)   # inclinación desde la vertical para considerarla volcada
+VUELCO_TIEMPO = 0.7                 # s volcada y en suelo antes de auto-resetear

@@ -2,10 +2,7 @@ import math
 import sys
 import pygame
 import pymunk
-
-
-WIDTH, HEIGHT = 1200, 600
-FPS = 60
+from confi import WIDTH, HEIGHT
 
 CAMERA_OFFSET_X = WIDTH // 3
 CAMERA_OFFSET_Y = HEIGHT // 3

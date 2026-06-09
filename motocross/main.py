@@ -13,6 +13,7 @@ from aerodinamica import Aerodinamica
 from confi import WIDTH, HEIGHT,FPS
 
 AERO        = 0.01        # escala m/px para el drag
+tiempo_volcada = 0.0
 def main():
 
     pygame.init()
@@ -32,7 +33,7 @@ def main():
     # Manejadores
     registrar_handlers(
         space,
-        ruedas_ct   = pm.ruedas_propiedades,
+        cuerpos_ct=  pm.moto_propiedades,
         terrenos_ct = propiedades_segmentos
     )
 
@@ -53,7 +54,8 @@ def main():
                 if event.key == pygame.K_ESCAPE:
                     running = False
                 elif event.key == pygame.K_r:
-                    moto_objeto.reset()
+                    mx = moto_objeto.body.position.x
+                    moto_objeto.reset((mx, terrain.altura_en(mx) + 200))
 
         
         moto = moto_objeto.body
@@ -89,16 +91,13 @@ def main():
                     moto.torque          += tau_chasis
                     rueda_trasera.torque += -tau_chasis
             else:
-        
-                vel_rueda      = abs(rueda_trasera.angular_velocity) * pm.rueda_RADIUS
-                velocidad_moto = moto.velocity.length
-                patinando      = (vel_rueda - velocidad_moto) > pm.SLIP_UMBRAL
+                patinando = moto_objeto.patina_trasera()
                 moto_objeto.set_patinaje(patinando)
 
                 T = acelerador * pm.PAR_MOTOR
                 if patinando and acelerador > 0:
                     T *= pm.FACTOR_TRACCION
-                rueda_trasera.torque += -T             
+                rueda_trasera.torque += -T           
 
 
                 if inclinacion_back:
@@ -108,11 +107,20 @@ def main():
 
             v = moto_objeto.body.velocity
             fx, fy = aero.fuerza_drag((v.x * AERO, v.y * AERO), area=1, Cd=0.6)
-            moto_objeto.body.apply_force_at_local_point((fx / AERO, fy / AERO), (0, 0))
+            moto_objeto.body.apply_force_at_world_point((fx / AERO, fy / AERO), moto_objeto.body.position)
 
             space.step(sub_dt)
 
         moto_x, moto_y = moto.position
+
+        ang = (moto.angle + math.pi) % (2 * math.pi) - math.pi  
+        if (not aire) and abs(ang) > pm.VUELCO_ANGULO:
+            tiempo_volcada += dt
+            if tiempo_volcada > pm.VUELCO_TIEMPO:
+                moto_objeto.reset((moto_x, terrain.altura_en(moto_x) + 200))
+                tiempo_volcada = 0.0
+        else:
+            tiempo_volcada = 0.0
 
         # Actualizaciones
         camara.actu_camara(moto_x, moto_y)
@@ -137,7 +145,7 @@ def main():
         ]
 
         for i, line in enumerate(hud):
-            screen.blit(font.render(line, True, (20, 20, 20)), (10, 10 + i * 22))
+            screen.blit(font.render(line, True, (255, 255, 255)), (10, 10 + i * 22))
 
         pygame.display.flip()
         clock.tick(FPS)

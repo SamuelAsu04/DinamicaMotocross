@@ -18,6 +18,7 @@ class Moto:
         shape = pymunk.Poly.create_box(self.body, (cw, ch))
         shape.friction    = 0.4
         shape.elasticity  = 0.1
+        shape.collision_type = pm.moto_propiedades[2]
         shape.filter      = pymunk.ShapeFilter(group=1)
         space.add(self.body, shape)
 
@@ -45,13 +46,8 @@ class Moto:
             space.add(groove, spring)
             self.ruedas.append({'body': rueda, 'shape': rueda_shape, 'side': side, 'offset_x': offset_x})
 
-        rear_rueda  = self.ruedas[0]['body']
-        self.motor  = pymunk.SimpleMotor(self.body, rear_rueda, 0)
-        self.motor.max_force = 0
-        space.add(self.motor)
-
-    def reset(self):
-        px, py = self.spawn
+    def reset(self, position=None):
+        px, py = position if position is not None else self.spawn
         self.body.position         = px, py
         self.body.velocity         = (0, 0)
         self.body.angle            = 0
@@ -61,7 +57,7 @@ class Moto:
             w['body'].velocity         = (0, 0)
             w['body'].angle            = 0
             w['body'].angular_velocity = 0
-
+            
     def momento_angular(self):
         """L_z del sistema (chasis + 2 ruedas) respecto a su CM. Se conserva en el aire."""
         bodies = [self.body] + [w['body'] for w in self.ruedas]

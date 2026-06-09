@@ -89,3 +89,10 @@ class Terrain:
                 self.estado = 0
                 self.segs_en_estado = 0
                 self.segs_para_rampa = random.randint(6, 12)  
+    
+    def altura_en(self, x):
+        for s in self.segmentos:
+            if s['x0'] <= x <= s['x1']:
+                t = (x - s['x0']) / (s['x1'] - s['x0'])
+                return s['y0'] + t * (s['y1'] - s['y0'])
+        return self.last_y 
