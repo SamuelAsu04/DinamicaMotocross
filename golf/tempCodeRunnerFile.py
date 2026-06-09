@@ -1,1 +1,0 @@
-vertices_baston

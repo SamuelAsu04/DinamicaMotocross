@@ -65,7 +65,7 @@ def main():
         # Controles
         keys = pygame.key.get_pressed()
         if keys[pygame.K_RIGHT]:
-            acelerador = 1.0
+            acelerador = 2.0
         elif keys[pygame.K_LEFT]:
             acelerador = -0.4
         else:
@@ -84,9 +84,9 @@ def main():
             if aire:
                 tau_chasis = 0.0
                 if inclinacion_back:
-                    tau_chasis = +pm.PILOT_TORQUE     
+                    tau_chasis = +pm.INCLINACION_TORQUE_AIRE     
                 elif inclinacion_fwd:
-                    tau_chasis = -pm.PILOT_TORQUE 
+                    tau_chasis = -pm.INCLINACION_TORQUE_AIRE 
 
                 if tau_chasis != 0.0 and abs(moto.angular_velocity) < pm.OMEGA_MAX_AIRE:
                     moto.torque          += tau_chasis
